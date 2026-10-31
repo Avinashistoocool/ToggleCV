@@ -1,0 +1,39 @@
+# ToggleCV projects: one entry per GitHub repository.
+# enabled: true  -> the project goes into your CV's Projects section (list order = CV order).
+# rac            -> the three bullets: Result, Action, Context. Drafted from the README; edit freely.
+# reviewed: true -> you have checked the bullets. apply refuses enabled projects that are not reviewed.
+# Refresh from GitHub with: python togglecv.py refresh   (keeps your toggles and edits)
+github_user: your-github-username
+style: auto          # auto | jake | itemize | custom
+show_language: true  # print the repo's main language next to the title
+projects:
+- repo: your-github-username/image-classifier
+  enabled: true
+  reviewed: true
+  title: Image Classifier
+  url: https://github.com/your-github-username/image-classifier
+  dates: Jan - Mar 2026
+  tech: PyTorch
+  rac:
+    result: Reached **91% test accuracy** on a 10-class dataset, up from a 78% logistic-regression baseline.
+    action: Trained a small CNN in PyTorch with data augmentation, early stopping, and a fixed validation split.
+    context: Course project comparing classical baselines with deep models on a 6 GB GPU budget.
+- repo: your-github-username/old-experiment
+  enabled: false     # kept in the file, left out of the CV
+  reviewed: false
+  title: old-experiment
+  url: https://github.com/your-github-username/old-experiment
+  dates: ''
+  tech: Python
+  rac:
+    result: ''
+    action: ''
+    context: ''
+
+# For a CV that uses its own macros, set style: custom and describe one project:
+# custom:
+#   before: \begin{itemize}
+#   entry: "\\item \\textbf{<<title_link>>} \\hfill <<dates>>\n\\begin{itemize}\n<<bullets>>\\end{itemize}"
+#   bullet: "\\item <<bullet>>\n"
+#   after: \end{itemize}
+# Placeholders: <<title>> <<title_link>> <<url>> <<dates>> <<tech>> <<bullets>> (entry), <<bullet>> (bullet)

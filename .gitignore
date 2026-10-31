@@ -1,5 +1,9 @@
 # Personal data: keep local, never publish
 config.yaml
+projects.yaml
+*.togglecv.tex
+*.togglecv.pdf
+*.bak
 cv.pdf
 cv.tex
 YC_CV.pdf

@@ -157,7 +157,7 @@ def _choose(slot, options, current, ask, say):
         say("  Please enter a listed number, e, s" + (", or k" if current else "") + ".")
 
 
-def review(project_id, project, readme, ask=input, say=print):
+def review(project_id, project, readme, ask=input, say=print, target="config.yaml"):
     """Interactively pick one bullet per slot. Returns three bullets, or None if skipped/rejected."""
     options = candidates(readme_sentences(readme))
     current = project.get("bullets") or []
@@ -175,7 +175,7 @@ def review(project_id, project, readme, ask=input, say=print):
         say(f"  {slot[0].upper()}: {bullet}")
         if len(bullet) > 125:
             say(f"     note: {len(bullet)} characters; likely too long for one line")
-    if ask("Save these to config.yaml? [y/N]: ").strip().lower() != "y":
+    if ask(f"Save these to {target}? [y/N]: ").strip().lower() != "y":
         say("Not saved; config not changed.")
         return None
     return chosen

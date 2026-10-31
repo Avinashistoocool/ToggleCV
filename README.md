@@ -1,5 +1,118 @@
 # ToggleCV
 
+**Your GitHub repos → a YAML file of on/off switches → the Projects section of your
+own LaTeX CV.** Every project gets exactly three bullets in the
+**Result / Action / Context (R-A-C)** structure, drafted from its README and only
+used after you approve them.
+
+## The R-A-C structure
+
+| Bullet | Answers | Example |
+|---|---|---|
+| **Result** | What changed? Lead with a measured outcome. | Reached **91% test accuracy**, up from a 78% baseline. |
+| **Action** | What did *you* build, and with what? | Trained a small CNN in PyTorch with augmentation and early stopping. |
+| **Context** | Where, why, for whom, with whom? | Course project comparing baselines with deep models on a 6 GB GPU. |
+
+Three lines per project keeps every entry the same size, puts the evidence first, and
+makes it obvious when a project has no result worth stating.
+
+## Use it with your own CV (`togglecv.py`)
+
+```powershell
+git clone https://github.com/Avinashistoocool/ToggleCV
+cd ToggleCV
+pip install -r requirements.txt
+
+python togglecv.py init --user <your-github-username>   # 1. projects.yaml from your public repos
+#                                                          2. edit projects.yaml: enabled: true on the ones you want
+python togglecv.py review                               # 3. pick/edit/approve bullets from each README
+python togglecv.py apply my_cv.tex --compile            # 4. writes my_cv.togglecv.tex (+ PDF check)
+```
+
+`projects.yaml` is the toggle file:
+
+```yaml
+github_user: your-github-username
+style: auto            # auto | jake | itemize | custom
+show_language: true
+projects:
+- repo: you/image-classifier
+  enabled: true        # in the CV
+  reviewed: true       # you approved the bullets
+  title: Image Classifier
+  url: https://github.com/you/image-classifier
+  dates: Jan - Mar 2026
+  tech: PyTorch
+  rac:
+    result: Reached **91% test accuracy** on a 10-class dataset, up from a 78% baseline.
+    action: Trained a small CNN in PyTorch with augmentation and early stopping.
+    context: Course project comparing classical and deep models on a 6 GB GPU.
+- repo: you/old-experiment
+  enabled: false       # kept, but left out of the CV
+  ...
+```
+
+List order is CV order. See `projects.example.yaml` for a complete file.
+
+| Command | What it does |
+|---|---|
+| `togglecv.py init --user NAME` | Create `projects.yaml`. Every repo starts **off** and **unreviewed**, with one README sentence suggested per slot. Forks and your profile README repo are skipped (`--include-forks` to keep forks). |
+| `togglecv.py refresh` | Add new repos (off), update stars/language/URLs, follow renames. Never touches your switches, titles, dates or bullets. Deleted repos are kept and marked `missing`. |
+| `togglecv.py list` | Show `on`/`ok` status for every project. |
+| `togglecv.py review [NAME ...]` | For each enabled, unreviewed project (or the ones named): choose a README sentence per slot, edit it, write your own, or keep the current one. Saves and sets `reviewed: true` only when you answer `y`. |
+| `togglecv.py apply CV.tex` | Replace the Projects section with your enabled projects. Writes `CV.togglecv.tex`; `--out FILE` or `--in-place` (keeps a `.bak`). `--compile [ENGINE]` checks it builds. |
+
+### How `apply` finds your Projects section
+
+1. If the file has a `% TOGGLECV:BEGIN` line and a `% TOGGLECV:END` line, only the text
+   between them is replaced. `apply` adds these markers the first time, so re-running
+   is safe and gives the same result.
+2. Otherwise it looks for **one** heading containing "Project": `\section`,
+   `\section*`, `\subsection`, or a custom macro such as `\cvsection{...}`. Everything
+   after that heading up to the next heading of the same or higher level is replaced.
+   Headings inside `%` comments are ignored.
+3. If no heading or several headings match, it stops and tells you to paste the two
+   marker lines where your projects belong.
+
+Your original file is never modified unless you pass `--in-place`.
+
+### Matching your CV's look
+
+- `style: auto` uses Jake's Resume macros (`\resumeProjectHeading`, `\resumeItem`, …)
+  when your file defines them, otherwise a nested `itemize`.
+- `style: custom` lets you describe one entry with placeholders:
+
+```yaml
+style: custom
+custom:
+  before: \begin{itemize}
+  entry: "\\item \\textbf{<<title_link>>} \\hfill <<dates>>\n\\begin{itemize}\n<<bullets>>\\end{itemize}"
+  bullet: "\\item <<bullet>>\n"
+  after: \end{itemize}
+```
+
+Placeholders: `<<title>>`, `<<title_link>>` (a link only if your CV loads `hyperref`),
+`<<url>>`, `<<dates>>`, `<<tech>>`, `<<bullets>>`, and `<<bullet>>`.
+
+### Safeguards
+
+- `apply` refuses projects that are enabled but not `reviewed`, unless you pass
+  `--allow-unreviewed`, and refuses any enabled project missing one of its three bullets.
+- Suggested bullets are **sentences copied from the README**, never generated. README
+  prose is often long or written as instructions; treat suggestions as raw material.
+- `&`, `%`, `_`, `#` and similar are escaped. Arrows, `×`, `·` and similar are converted
+  to LaTeX; combining accents are removed with a warning. Bullets over 160
+  characters are flagged.
+- `projects.yaml`, `*.togglecv.tex`, `*.togglecv.pdf` and `*.bak` are git-ignored.
+- Public repos need no token; set `GITHUB_TOKEN` for private repos or higher rate limits.
+
+---
+
+## Built-in two-profile builder (`build.py`)
+
+The rest of this README covers `build.py`, which renders complete one-page CVs from its
+own templates instead of editing an existing `.tex`.
+
 **One YAML file in, one-page PDFs out.** A config-driven CV builder that keeps every
 project you've done in one place, drafts Result/Action/Context bullets from your
 GitHub READMEs (saved only when you approve them), lets you switch each project on
@@ -14,22 +127,19 @@ config.yaml ──► validate ──► select per profile ──► Jinja2 →
      └── python build.py --sync-github   (imports new repos, switched off)
 ```
 
-## Why
+### Why
 
 Keeping several CV versions in sync by hand goes wrong fast: a metric gets updated in
 one file but not the other, a new project never makes it in, or a bullet wraps onto a
 second line and leaves white space. This tool keeps **one source of truth** and makes
 the layout rules machine-checked.
 
-## Quick start
+### Quick start
 
 Requirements: Python 3.10+, `PyYAML`, `Jinja2`, and a TeX distribution with
 `pdflatex` (MiKTeX or TeX Live).
 
 ```powershell
-git clone https://github.com/Avinashistoocool/ToggleCV
-cd ToggleCV
-pip install -r requirements.txt
 copy config.example.yaml config.yaml   # macOS/Linux: cp config.example.yaml config.yaml
 python build.py --all                  # build both CVs
 ```
@@ -51,7 +161,7 @@ turn on `profiles.research.sections.logo` / `photo`.
 | `python build.py --tex-only` | Write LaTeX without compiling (no checks) |
 | `python -m unittest test_cv_config -v` | Run the test suite |
 
-## Turning a project on or off
+### Turning a project on or off
 
 Every project has one switch per CV profile:
 
@@ -90,7 +200,7 @@ asclepius                                false     false
 ...
 ```
 
-## Writing a project
+### Writing a project
 
 ```yaml
 projects:
@@ -116,7 +226,7 @@ are escaped for you.
 An override replaces the shared field for that profile only. If an edit "doesn't
 show up", check whether that profile has an override for the same field.
 
-## Drafting bullets from GitHub READMEs
+### Drafting bullets from GitHub READMEs
 
 ```powershell
 python build.py --draft                 # every repo-linked project with no bullets yet
@@ -157,7 +267,7 @@ Rules it follows:
   `python build.py --all -v` to check fit.
 - Public repos need no token. Set `GITHUB_TOKEN` for private repos or to avoid rate limits.
 
-## Layout rules the build enforces
+### Layout rules the build enforces
 
 A PDF is only written if all of these pass:
 
@@ -180,7 +290,7 @@ The previous `cv.pdf` and `.tex` are left untouched; the failed attempt and its 
 stay in `build/`. Fonts are never shrunk and projects are never dropped silently, so
 fix the wording or switch a project off.
 
-## Syncing with GitHub
+### Syncing with GitHub
 
 ```powershell
 python build.py --sync-github          # update config.yaml only
@@ -208,6 +318,9 @@ keep in a project's `notes` field.
 
 | Path | Purpose |
 |---|---|
+| `togglecv.py` | GitHub → `projects.yaml` → Projects section of your own `.tex` |
+| `projects.example.yaml` | Example toggle file for `togglecv.py` |
+| `test_togglecv.py` | Tests for sync, section detection, rendering, approval and compiling |
 | `config.yaml` | Your content and switches (git-ignored; start from `config.example.yaml`) |
 | `config.example.yaml` | Sanitized example that builds both CVs |
 | `build.py` | CLI: render, compile, check, publish |
@@ -240,7 +353,7 @@ keep in a project's `notes` field.
 `cv.tex` and `YC_CV.tex` are standalone pdfLaTeX documents. For the research CV, also
 upload the `assets` folder.
 
-## Adding another profile
+### Adding another profile
 
 The schema ships with `research` and `yc`. Adding a third (for example `quant`)
 currently means adding it to `PROFILES` in `cv_config.py`, giving it a
