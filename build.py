@@ -148,6 +148,9 @@ def main():
     profiles.add_argument("--all", action="store_true", help="build both profiles")
     parser.add_argument("--config", type=Path, default=ROOT / "config.yaml")
     parser.add_argument("--sync-github", action="store_true", help="refresh metadata; new repos stay disabled")
+    parser.add_argument("--draft", nargs="*", metavar="PROJECT_ID",
+                        help="pick RAC bullets from GitHub READMEs, saved only after approval "
+                             "(no IDs: projects with a repo and no bullets)")
     parser.add_argument("--list", action="store_true", help="list project IDs and their inclusion switches")
     parser.add_argument("--tex-only", action="store_true", help="export selected LaTeX without compiling")
     parser.add_argument("--strict", action="store_true", help="compatibility flag; validation is always strict")
@@ -157,6 +160,10 @@ def main():
         config = load_config(args.config)
         if args.sync_github:
             config = sync_github(args.config, config)
+        if args.draft is not None:
+            from readme_draft import draft
+            draft(args.config, config, args.draft)
+            return 0
         if args.list:
             print(f"{'Project ID':45} Research  YC")
             for project_id, project in config["projects"].items():
@@ -170,6 +177,9 @@ def main():
             build_profile(config, profile, args.tex_only, args.v)
     except (ConfigError, OSError, jinja2.TemplateError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
+        return 1
+    except (KeyboardInterrupt, EOFError):
+        print("\nCancelled; config not changed.", file=sys.stderr)
         return 1
     return 0
 

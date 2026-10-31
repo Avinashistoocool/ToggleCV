@@ -1,14 +1,17 @@
 # ToggleCV
 
 **One YAML file in, one-page PDFs out.** A config-driven CV builder that keeps every
-project you've done in one place, lets you switch each one on or off per audience
-with a boolean, and refuses to publish a PDF that has half-empty lines, wrapped
-bullets, or spills onto a second page.
+project you've done in one place, drafts Result/Action/Context bullets from your
+GitHub READMEs (saved only when you approve them), lets you switch each project on
+or off per audience with a boolean, and refuses to publish a PDF that has half-empty
+lines, wrapped bullets, or spills onto a second page.
 
 ```
+GitHub READMEs ──► --draft (you pick/edit/approve) ──┐
+                                                     ▼
 config.yaml ──► validate ──► select per profile ──► Jinja2 → LaTeX ──► pdfLaTeX ──► line-fit + 1-page check ──► cv.pdf / YC_CV.pdf
      ▲
-     └── python build.py --sync-github   (pulls repo metadata; never writes your bullets)
+     └── python build.py --sync-github   (imports new repos, switched off)
 ```
 
 ## Why
@@ -44,6 +47,7 @@ turn on `profiles.research.sections.logo` / `photo`.
 | `python build.py --list` | Show every project and its on/off switches |
 | `python build.py -v` | Also print how full each line is |
 | `python build.py --sync-github` | Refresh GitHub metadata in `config.yaml` |
+| `python build.py --draft [ID ...]` | Pick RAC bullets from GitHub READMEs, saved only on approval |
 | `python build.py --tex-only` | Write LaTeX without compiling (no checks) |
 | `python -m unittest test_cv_config -v` | Run the test suite |
 
@@ -112,6 +116,47 @@ are escaped for you.
 An override replaces the shared field for that profile only. If an edit "doesn't
 show up", check whether that profile has an override for the same field.
 
+## Drafting bullets from GitHub READMEs
+
+```powershell
+python build.py --draft                 # every repo-linked project with no bullets yet
+python build.py --draft my-project      # one or more specific project IDs
+```
+
+ToggleCV fetches the project's README through the GitHub API, strips code blocks,
+tables, images, badges and headings, then ranks the remaining sentences into the
+three slots:
+
+| Slot | Favours sentences that… |
+|---|---|
+| **Result** | contain numbers or outcome words (accuracy, latency, reduced, stars…) |
+| **Action** | start with or contain build verbs (built, trained, implemented, uses…) |
+| **Context** | describe purpose or setting (goal, for, hackathon, course, team…) |
+
+Setup instructions ("Run…", "Install…", command-line flags, file paths) are
+pushed down the list. For each slot you choose a numbered candidate (and can edit
+it), write your own (`e`), keep the existing bullet (`k`), or skip the project
+(`s`). Nothing is written until you confirm **Save these to config.yaml? [y/N]**.
+
+```text
+== Result: what was achieved, ideally with a measured number ==
+  [1] On the v2 10M checkpoint, the upcycled model reached val acc 0.8479 ...
+  [2] ...
+  [e] write your own   [s] skip project (nothing saved)
+Choice: 1
+Edit (Enter keeps it as shown): Kept **84.8% accuracy** after upcycling a dense jet tagger into an 8-expert MoE.
+```
+
+Rules it follows:
+
+- Candidates are **copied from your README**, never generated. No LLM, no API key.
+- Approval is per project; declining or pressing Ctrl+C leaves `config.yaml` untouched.
+- Saving does **not** switch a project on. Flip `enabled.<profile>` yourself.
+- A dated note is added to the project's `notes` so you know where the text came from.
+- README sentences are usually too long for one CV line: edit them down, then run
+  `python build.py --all -v` to check fit.
+- Public repos need no token. Set `GITHUB_TOKEN` for private repos or to avoid rate limits.
+
 ## Layout rules the build enforces
 
 A PDF is only written if all of these pass:
@@ -167,6 +212,8 @@ keep in a project's `notes` field.
 | `config.example.yaml` | Sanitized example that builds both CVs |
 | `build.py` | CLI: render, compile, check, publish |
 | `cv_config.py` | Validation, profile selection, GitHub sync |
+| `readme_draft.py` | README fetch, sentence ranking, interactive approval |
+| `test_readme_draft.py` | Tests for extraction and approve/decline behaviour |
 | `template.tex.j2` | Research CV layout (logo, photo, academic table) |
 | `yc.tex.j2` | Industry CV layout (text-first, no photo) |
 | `assets/` | Logo and photo for the research CV |
