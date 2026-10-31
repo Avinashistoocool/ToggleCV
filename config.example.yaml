@@ -1,0 +1,145 @@
+# ToggleCV example configuration. Copy to config.yaml and replace with your own details.
+# projects.<id>.enabled.<profile>: true includes the project in that CV, false leaves it out.
+schema_version: 1
+github:
+  username: your-github-username
+person:
+  name: Alex Example
+  email: alex@example.com
+  phone: '+00 00000 00000'
+  website: https://example.com
+  logo: ''
+  photo: ''
+profiles:
+  research:
+    links:
+    - enabled: true
+      label: Website
+      url: https://example.com
+    - enabled: true
+      label: GitHub
+      url: https://github.com/your-github-username
+    research_interests: Machine Learning, Robotics, Computational Physics, Scientific Computing, Control Systems, Sensing
+    achievements:
+    - enabled: true
+      title: Example Award
+      text: Ranked in the **top 1%** of a national programme of roughly **100,000** student entrants nationwide.
+      year: '2026'
+    leadership:
+    - enabled: true
+      title: Robotics Club Lead
+      text: Ran weekly build sessions for **40 members** and organised two inter-college robotics events.
+      year: '2026'
+    skills:
+    - enabled: true
+      name: Languages & Tools
+      text: Python, C++, MATLAB, LaTeX, Git, Linux, Bash, NumPy, Pandas, OpenCV, Jupyter, Docker, SQL
+    - enabled: true
+      name: Machine Learning
+      text: PyTorch, scikit-learn, Transformers, model evaluation, data pipelines, experiment tracking, ablations
+    education:
+    - enabled: true
+      year: 2029 (Exp.)
+      degree: B.Tech in Engineering
+      institute: Example Institute of Technology
+      score: '8.0'
+    sections:
+      projects: true
+      education: true
+      skills: true
+      achievements: true
+      leadership: true
+      highlights: false
+      links: true
+      research_interests: true
+      logo: false
+      photo: false
+    project_order:
+    - example-ml
+    - example-robot
+    highlights: []
+  yc:
+    links:
+    - enabled: true
+      label: example.com
+      url: https://example.com
+    - enabled: true
+      label: GitHub
+      url: https://github.com/your-github-username
+    headline: Machine Learning & Software Engineering
+    summary: Engineering student building ML models, data tools, and robotics software.
+    education:
+    - enabled: true
+      institute: Example Institute of Technology
+      degree: B.Tech, Engineering
+      graduation: Expected 2029
+    skills:
+    - enabled: true
+      name: Software & ML
+      text: Python, C++, Git, Linux, PyTorch, scikit-learn, NumPy, Pandas, OpenCV, Docker, SQL, FastAPI
+    highlights:
+    - enabled: true
+      text: '**Top 1%** in a national programme of 100,000 students; led a **40-member** robotics club and ran two inter-college events.'
+    sections:
+      projects: true
+      education: true
+      skills: true
+      achievements: false
+      leadership: false
+      highlights: true
+      links: true
+      research_interests: false
+      logo: false
+      photo: false
+    project_order:
+    - example-ml
+    - example-tool
+    achievements: []
+    leadership: []
+projects:
+  example-ml:
+    enabled:
+      research: true
+      yc: true
+    github_repo: ''
+    title: Image Classifier | Example Project
+    url: https://example.com/image-classifier
+    dates: Jan - Mar 2026
+    bullets:
+    - Reached **91% test accuracy** on a 10-class image dataset, up from a **78%** logistic-regression baseline on the same split.
+    - Trained a small **PyTorch CNN** with data augmentation, early stopping, and a fixed validation split for model tuning.
+    - Built as a course project to compare classical baselines with deep models on a limited **6 GB GPU** compute budget per run.
+    notes: Example content. Replace with your own work and keep the source of each number here.
+    overrides:
+      yc:
+        bullets:
+        - Reached **91% test accuracy** on a 10-class image dataset, up from a **78%** logistic-regression baseline model.
+        - Trained a small **PyTorch CNN** with data augmentation, early stopping, and a fixed validation split for tuning.
+        - Built as a course project comparing classical baselines with deep models on a limited **6 GB GPU** compute budget.
+  example-robot:
+    enabled:
+      research: true
+      yc: false
+    github_repo: ''
+    title: Line-Following Robot | Example Project
+    url: ''
+    course: Intro to Robotics
+    dates: Aug - Nov 2025
+    bullets:
+    - Completed a **3 m test track** in **14 s** with no off-track events across **10 consecutive** timed trial runs on the course track.
+    - Wrote a **PID controller** in C++ on an Arduino, tuning proportional, integral, and derivative gains from logged sensor error.
+    - Built in a team of three for a robotics course competition; I owned the control loop, the data logging, and all gain tuning.
+    overrides: {}
+  example-tool:
+    enabled:
+      research: false
+      yc: true
+    github_repo: ''
+    title: CSV Reconciler | Example Project
+    url: https://example.com/reconciler
+    dates: '2026'
+    bullets:
+    - Flagged **7 mismatch types** between order, payment, and refund exports with exact integer-cent arithmetic.
+    - Wrote a **Python CLI** with SQLite storage, idempotent re-imports, a full audit trail, and an HTML review page.
+    - Built to practise data-pipeline design; candidate matches always go to a human for review, never auto-applied.
+    overrides: {}

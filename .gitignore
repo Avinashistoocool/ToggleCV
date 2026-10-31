@@ -1,0 +1,14 @@
+# Personal data: keep local, never publish
+config.yaml
+cv.pdf
+cv.tex
+YC_CV.pdf
+YC_CV.tex
+assets/
+legacy/
+prev.png
+
+# Build output and caches
+build/
+__pycache__/
+*.pyc

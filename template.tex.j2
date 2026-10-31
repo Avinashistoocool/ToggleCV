@@ -1,0 +1,117 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{textcomp}
+\usepackage[left=0.35in,right=0.35in,top=0.35in,bottom=0.3in]{geometry}
+\usepackage[protrusion=true,expansion=true,tracking=false]{microtype}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{tabularx}
+\usepackage{array}
+\input{glyphtounicode}
+\pdfgentounicode=1
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\flushbottom
+\definecolor{secgrey}{gray}{0.75}
+
+\newcommand{\cvsection}[1]{%
+  \par\vspace{\VAR{layout.section_before}}%
+  \noindent\fcolorbox{black}{secgrey}{\parbox{\dimexpr\textwidth-2\fboxsep-2\fboxrule}{\bfseries\MakeUppercase{#1}}}%
+  \par\vspace{\VAR{layout.section_after}}%
+}
+\newcommand{\projhead}[2]{\item \textbf{#1}\hfill\textit{#2}}
+
+% \fitline{id}{text}: logs natural width vs line width (checked by build.py)
+% and justifies the line edge-to-edge (last line included).
+\makeatletter
+\newwrite\fitfile
+\immediate\openout\fitfile=\jobname.fit
+\newcommand{\fitline}[2]{%
+  \setbox0\hbox{#2}%
+  \setbox2\vbox{\hsize\linewidth\parfillskip=0pt\relax\noindent #2\par\xdef\fitlines{\the\prevgraf}}%
+  \immediate\write\fitfile{#1:\the\wd0:\the\linewidth:\fitlines}%
+  {\parfillskip=0pt\relax #2\par}}
+\makeatother
+
+\setlist[itemize]{itemsep=\VAR{layout.item_sep}, topsep=1pt plus 2pt, parsep=0pt, partopsep=0pt}
+\setlist[itemize,1]{leftmargin=0.16in, label=\textbullet}
+\setlist[itemize,2]{leftmargin=0.16in, label=-}
+
+\begin{document}
+
+\newlength{\hdrh}\setlength{\hdrh}{\VAR{layout.header_height}}
+\noindent
+\BLOCK{if logo}\raisebox{-0.5\height}{\includegraphics[height=\hdrh]{\VAR{logo}}}\BLOCK{else}\rule{0pt}{\hdrh}\BLOCK{endif}%
+\hfill
+\raisebox{-0.5\height}{\parbox{\dimexpr\textwidth-2.4\hdrh}{\centering
+  {\fontsize{19}{22}\selectfont\bfseries \BLOCK{if website}\href{\VAR{website}}{\VAR{name | upper}}\BLOCK{else}\VAR{name | upper}\BLOCK{endif}}\\[4pt]
+  \href{mailto:\VAR{email}}{\VAR{email | esc}}\,$|$\,\VAR{phone | esc}\\[2pt]
+  \BLOCK{for l in links}\href{\VAR{l.url | urlesc}}{\underline{\VAR{l.label | esc}}}\BLOCK{if not loop.last}\,$|$\,\BLOCK{endif}\BLOCK{endfor}
+}}%
+\hfill
+\BLOCK{if photo}\raisebox{-0.5\height}{\includegraphics[height=\hdrh]{\VAR{photo}}}\BLOCK{else}\rule{0pt}{\hdrh}\BLOCK{endif}
+\par\vspace{2pt plus 4pt}
+\BLOCK{if research_interests}
+\fitline{interests}{\textbf{Research Interests:} \VAR{research_interests | fmt}}
+\BLOCK{endif}
+
+\BLOCK{if projects}
+\cvsection{Research \& Technical Projects}
+\begin{itemize}
+\BLOCK{for p in projects | visible}
+\BLOCK{set pi = loop.index}
+  \projhead{\BLOCK{if p.url}\href{\VAR{p.url | urlesc}}{\underline{\VAR{p.title | fmt}}}\BLOCK{else}\VAR{p.title | fmt}\BLOCK{endif}\BLOCK{if p.advisor} \textmd{$|$ Advised by \textbf{\VAR{p.advisor | fmt}}}\BLOCK{elif p.course} \textmd{$|$ \VAR{p.course | fmt}}\BLOCK{endif}}{\BLOCK{if p.dates}(\VAR{p.dates | esc})\BLOCK{endif}}
+  \begin{itemize}
+  \BLOCK{for b in p.bullets}
+    \item \fitline{project \VAR{pi} bullet \VAR{loop.index}}{\VAR{b | fmt}}
+  \BLOCK{endfor}
+  \end{itemize}
+\BLOCK{endfor}
+\end{itemize}
+\BLOCK{endif}
+
+\BLOCK{for sec, heading in [('achievements', 'Scholastic Achievements'), ('leadership', 'Technical Engagements \\& Leadership')]}
+\BLOCK{set items = data[sec] | visible}
+\BLOCK{if items}
+\cvsection{\VAR{heading}}
+\begin{itemize}
+\BLOCK{for a in items}
+  \item \fitline{\VAR{sec} \VAR{loop.index}}{\textbf{\VAR{a.title | fmt}:} \VAR{a.text | fmt} \textit{(\VAR{a.year | esc})}}
+\BLOCK{endfor}
+\end{itemize}
+\BLOCK{endif}
+\BLOCK{endfor}
+
+\BLOCK{if skills}
+\cvsection{Technical Skills}
+\begin{itemize}
+\BLOCK{for k, v in skills.items()}
+  \item \fitline{skills \VAR{loop.index}}{\textbf{\VAR{k | esc}:} \VAR{v | fmt}}
+\BLOCK{endfor}
+\end{itemize}
+\BLOCK{endif}
+
+\BLOCK{if education}
+\cvsection{Academic Profile}
+{\renewcommand{\arraystretch}{1.15}%
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{0.13\textwidth}|>{\centering\arraybackslash}X|>{\centering\arraybackslash}p{0.36\textwidth}|>{\centering\arraybackslash}p{0.15\textwidth}|}
+\hline
+\textbf{Year} & \textbf{Degree / Board} & \textbf{Institute} & \textbf{GPA / Marks(\%)} \\
+\hline
+\BLOCK{for e in education | visible}
+\VAR{e.year | esc} & \VAR{e.degree | fmt} & \VAR{e.institute | fmt} & \VAR{e.score | esc} \\
+\hline
+\BLOCK{endfor}
+\end{tabularx}}
+\BLOCK{endif}
+% cancel \newpage's \vfil so finite stretch spreads content to the page bottom
+\vspace{0pt plus -1fil}
+
+\end{document}

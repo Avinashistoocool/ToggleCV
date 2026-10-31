@@ -1,0 +1,82 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{textcomp}
+\usepackage[margin=0.4in]{geometry}
+\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+\input{glyphtounicode}
+\pdfgentounicode=1
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\flushbottom
+\titleformat{\section}{\large\bfseries}{}{0em}{}[\titlerule]
+\titlespacing*{\section}{0pt}{12pt plus 8pt}{6pt plus 3pt}
+\setlist[itemize]{leftmargin=12pt,itemsep=4pt plus 2pt,topsep=5pt plus 3pt,parsep=0pt,partopsep=0pt}
+\newwrite\fitfile
+\immediate\openout\fitfile=\jobname.fit
+\newcommand{\fitline}[2]{%
+  \setbox0\hbox{#2}%
+  \setbox2\vbox{\hsize\linewidth\parfillskip=0pt\noindent #2\par\xdef\fitlines{\the\prevgraf}}%
+  \immediate\write\fitfile{#1:\the\wd0:\the\linewidth:\fitlines}%
+  {\parfillskip=0pt #2\par}%
+}
+\begin{document}
+\fontsize{10.5}{13}\selectfont
+{\fontsize{23}{27}\selectfont\bfseries\href{\VAR{website | urlesc}}{\VAR{name | esc}}}\par
+\vspace{5pt}
+{\large \VAR{headline | esc}}\par
+\vspace{6pt}
+\href{mailto:\VAR{email}}{\VAR{email | esc}} \hfill \VAR{phone | esc}\par
+\BLOCK{for link in links}
+\href{\VAR{link.url | urlesc}}{\VAR{link.label | esc}}\BLOCK{if not loop.last}\quad|\quad\BLOCK{endif}
+\BLOCK{endfor}
+\par\vspace{8pt}
+\VAR{summary | fmt}\par
+
+\BLOCK{if education}
+\section{Education}
+\textbf{\VAR{education.institute | esc}} \hfill \VAR{education.graduation | esc}\par
+\VAR{education.degree | esc}\par
+\BLOCK{endif}
+
+\BLOCK{if projects}
+\section{Selected Engineering Projects}
+\BLOCK{for project in projects}
+\BLOCK{set pi = loop.index}
+\textbf{\BLOCK{if project.url}\href{\VAR{project.url | urlesc}}{\underline{\VAR{project.title | esc}}}\BLOCK{else}\VAR{project.title | esc}\BLOCK{endif}}
+\hfill \VAR{project.dates | esc}\par
+\begin{itemize}
+\BLOCK{for bullet in project.bullets}
+\item \fitline{project \VAR{pi} bullet \VAR{loop.index}}{\VAR{bullet | fmt}}
+\BLOCK{endfor}
+\end{itemize}
+\BLOCK{if not loop.last}\vspace{6pt plus 8pt}\BLOCK{endif}
+\BLOCK{endfor}
+\BLOCK{endif}
+
+\BLOCK{if skills}
+\section{Technical Skills}
+\begin{itemize}
+\BLOCK{for name, items in skills.items()}
+\item \fitline{skills \VAR{loop.index}}{\textbf{\VAR{name | esc}:} \VAR{items | fmt}}
+\BLOCK{endfor}
+\end{itemize}
+\BLOCK{endif}
+
+\BLOCK{if highlights}
+\section{Recognition \& Leadership}
+\begin{itemize}
+\BLOCK{for item in highlights}
+\item \fitline{highlight \VAR{loop.index}}{\VAR{item | fmt}}
+\BLOCK{endfor}
+\end{itemize}
+\BLOCK{endif}
+% Let finite section and list spacing use the page, not the final page's fill glue.
+\vspace{0pt plus -1fil}
+\end{document}
