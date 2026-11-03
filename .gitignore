@@ -16,3 +16,4 @@ prev.png
 build/
 __pycache__/
 *.pyc
+cv_github.*
