@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ToggleCV: GitHub repos to on/off switches to the Projects section of a LaTeX CV</title>
+<meta name="description" content="CLI that turns your GitHub repos into a YAML toggle file and writes the Projects section of your LaTeX CV, with reviewed Result/Action/Context bullets.">
+<link rel="canonical" href="https://avinashistoocool.github.io/ToggleCV/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ToggleCV">
+<meta property="og:description" content="CLI that turns your GitHub repos into a YAML toggle file and writes the Projects section of your LaTeX CV, with reviewed Result/Action/Context bullets.">
+<meta property="og:url" content="https://avinashistoocool.github.io/ToggleCV/">
+<meta property="og:image" content="https://avinashistoocool.github.io/ToggleCV/cv-example.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f6f1e7">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='18' width='56' height='28' rx='14' fill='%231f3a2e'/%3E%3Ccircle cx='46' cy='32' r='10' fill='%23f6f1e7'/%3E%3C/svg%3E">
+<style>
+:root{
+  --paper:#f6f1e7; --paper2:#eee6d6; --ink:#1d1a16; --muted:#5a5247; --rule:#cbbfa9;
+  --green:#1f3a2e; --green2:#2f5a46; --on:#2f6b4f; --off:#9a8f7e; --red:#8a2f1d; --code:#fbf8f1;
+  --serif:"Iowan Old Style","Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;
+  --mono:"Cascadia Code","Cascadia Mono",Consolas,"SFMono-Regular",Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--paper);color:var(--ink);font:18px/1.6 var(--serif);-webkit-font-smoothing:antialiased}
+a{color:var(--green2);text-underline-offset:3px}
+a:hover{color:var(--red)}
+:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.skip{position:absolute;left:-999px}.skip:focus{left:8px;top:8px;background:#fff;padding:6px 10px;z-index:9}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+nav.top{border-bottom:1px solid var(--rule);background:var(--paper)}
+nav.top .wrap,footer .wrap{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;padding-top:12px;padding-bottom:12px;font-family:var(--mono);font-size:14px}
+nav.top a,footer a{color:var(--ink);text-decoration:none}
+nav.top a:hover,footer a:hover{text-decoration:underline;color:var(--red)}
+nav.top .sp{flex:1}
+header.hero{padding:56px 0 34px;border-bottom:3px double var(--rule)}
+.kicker{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+h1{font-size:clamp(40px,7vw,72px);line-height:1.02;margin:0 0 18px;font-weight:600;letter-spacing:-.01em}
+h1 .sw{display:inline-block;vertical-align:middle;width:.9em;height:.5em;border-radius:1em;background:var(--green);position:relative;margin-left:.15em}
+h1 .sw::after{content:"";position:absolute;right:.07em;top:.07em;width:.36em;height:.36em;border-radius:50%;background:var(--paper)}
+.lede{font-size:21px;max-width:760px;margin:0 0 22px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0 0 18px;list-style:none}
+.chips li{font-family:var(--mono);font-size:13px;border:1px solid var(--rule);background:var(--code);padding:3px 10px;border-radius:3px}
+.status{display:inline-block;font-family:var(--mono);font-size:14px;border-left:4px solid var(--on);background:var(--paper2);padding:8px 12px}
+section{padding:46px 0;border-bottom:1px solid var(--rule)}
+h2{font-size:30px;margin:0 0 6px;font-weight:600}
+h2 small{font-family:var(--mono);font-size:13px;color:var(--muted);font-weight:400;margin-right:10px}
+h3{font-size:20px;margin:26px 0 6px}
+p{max-width:760px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+pre,code{font-family:var(--mono);font-size:14px}
+code{background:var(--code);border:1px solid var(--paper2);padding:0 4px;border-radius:3px}
+pre{background:var(--code);border:1px solid var(--rule);padding:14px 16px;overflow-x:auto;line-height:1.5;margin:10px 0 18px;max-width:100%}
+pre code{border:0;padding:0;background:none}
+pre .c{color:#7a6f5e}
+.table-wrap{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;width:100%;font-size:16px;margin:10px 0 18px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--rule)}
+th{font-family:var(--mono);font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+td code{white-space:nowrap}
+.rac{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:18px 0}
+@media (max-width:820px){.rac{grid-template-columns:1fr}}
+.rac div{background:var(--code);border:1px solid var(--rule);border-top:5px solid var(--green);padding:14px 16px}
+.rac b{display:block;font-family:var(--mono);font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--green2)}
+.rac p{margin:6px 0 0;font-size:16px}
+.rac em{display:block;margin-top:8px;font-size:15px;color:var(--muted)}
+/* pipeline */
+ol.flow{list-style:none;padding:0;margin:20px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:0;counter-reset:s}
+@media (max-width:820px){ol.flow{grid-template-columns:1fr}}
+ol.flow li{counter-increment:s;padding:16px 16px 16px 16px;border:1px solid var(--rule);background:var(--code);position:relative;margin:0 -1px -1px 0}
+ol.flow li::before{content:counter(s);font-family:var(--mono);font-size:12px;color:var(--paper);background:var(--green);border-radius:50%;width:22px;height:22px;display:inline-grid;place-items:center;margin-bottom:6px}
+ol.flow li b{display:block;font-family:var(--mono);font-size:14px}
+ol.flow li span{font-size:15px;color:var(--muted);display:block;margin-top:4px}
+/* toggle demo */
+.demo{border:1px solid var(--rule);background:var(--code);padding:18px}
+.demo .row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--rule);flex-wrap:wrap}
+.demo .row:last-child{border-bottom:0}
+.demo .name{flex:1 1 200px;font-family:var(--mono);font-size:14px}
+.demo label{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;cursor:pointer}
+.demo input{appearance:none;-webkit-appearance:none;width:40px;height:22px;border-radius:11px;background:var(--off);position:relative;cursor:pointer;margin:0;transition:background .15s}
+.demo input::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
+.demo input:checked{background:var(--on)}
+.demo input:checked::after{left:21px}
+.out{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media (max-width:520px){.out{grid-template-columns:1fr}}
+.out div{border:1px solid var(--rule);background:#fff;padding:10px 12px;font-size:15px;min-height:96px}
+.out b{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.out ul{margin:6px 0 0;padding-left:18px}
+.out .none{color:var(--muted);font-style:italic}
+figure{margin:0}
+figure img{width:100%;height:auto;display:block;border:1px solid var(--rule);background:#fff;box-shadow:0 2px 0 var(--paper2),0 10px 24px rgba(40,30,10,.12)}
+figcaption{font-size:14px;color:var(--muted);margin-top:8px}
+.note{border-left:4px solid var(--red);background:var(--paper2);padding:12px 16px;max-width:760px}
+ul.plain{padding-left:20px;max-width:760px}
+ul.plain li{margin:4px 0}
+footer{padding:20px 0 40px}
+footer p{font-size:14px;color:var(--muted);margin:6px 0 0}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="top" aria-label="Site">
+  <div class="wrap">
+    <a href="https://avinashistoocool.github.io/">&larr; avinash</a>
+    <a href="https://avinashistoocool.github.io/projects/">All projects</a>
+    <span class="sp"></span>
+    <a href="#how">How it works</a>
+    <a href="#run">Run it</a>
+    <a href="https://github.com/Avinashistoocool/ToggleCV">Source &nearr;</a>
+  </div>
+</nav>
+
+<main id="main">
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">Python command-line tool &middot; MIT licence</p>
+    <h1>ToggleCV<span class="sw" aria-hidden="true"></span></h1>
+    <p class="lede">ToggleCV reads your public GitHub repositories into <code>projects.yaml</code>, a file with one on/off switch per project. It suggests three bullets per project, Result, Action and Context (R-A-C), as sentences copied from each README. You edit and approve them. It then rewrites the Projects section of your own LaTeX CV with the enabled projects. A second script, <code>build.py</code>, builds complete one-page research and industry CVs from one YAML file. It refuses to write a PDF that spills onto a second page or contains a bullet that wraps or ends half-empty.</p>
+    <ul class="chips" aria-label="Technologies">
+      <li>Python 3.10+</li><li>PyYAML</li><li>Jinja2</li><li>LaTeX / pdfLaTeX</li><li>GitHub REST API</li><li>no LLM</li>
+    </ul>
+    <p class="status">Status: usable from source. Clone the repository and run it locally; there is no hosted service.</p>
+  </div>
+</header>
+
+<section id="what">
+  <div class="wrap">
+    <h2><small>01</small>What it does</h2>
+    <p>One file decides which projects appear on a CV. Every project gets the same three-line structure:</p>
+    <div class="rac">
+      <div><b>Result</b><p>What changed? Lead with a measured outcome.</p><em>Reached 91% test accuracy, up from a 78% baseline.</em></div>
+      <div><b>Action</b><p>What did you build, and with what?</p><em>Trained a small CNN in PyTorch with augmentation and early stopping.</em></div>
+      <div><b>Context</b><p>Where, why, for whom, with whom?</p><em>Course project comparing baselines with deep models on a 6 GB GPU.</em></div>
+    </div>
+    <p>With three lines per project, every entry has the same size and the evidence comes first. A project with no result worth stating is easy to see. The examples above are from the README's sample data, not from a real CV.</p>
+
+    <h3>Try the switches</h3>
+    <p>This demo uses the three sample projects in <code>config.example.yaml</code>. Each project has one boolean per CV profile. Turning a project off removes it from that profile's PDF but keeps its text in the file.</p>
+    <div class="demo" id="demo">
+      <div class="row"><span class="name">example-ml</span>
+        <label><input type="checkbox" data-p="example-ml" data-k="research" checked> research</label>
+        <label><input type="checkbox" data-p="example-ml" data-k="yc" checked> yc</label></div>
+      <div class="row"><span class="name">example-robot</span>
+        <label><input type="checkbox" data-p="example-robot" data-k="research" checked> research</label>
+        <label><input type="checkbox" data-p="example-robot" data-k="yc"> yc</label></div>
+      <div class="row"><span class="name">example-tool</span>
+        <label><input type="checkbox" data-p="example-tool" data-k="research"> research</label>
+        <label><input type="checkbox" data-p="example-tool" data-k="yc" checked> yc</label></div>
+      <div class="out" aria-live="polite">
+        <div><b>cv.pdf (research)</b><ul id="o-research"></ul></div>
+        <div><b>YC_CV.pdf (industry)</b><ul id="o-yc"></ul></div>
+      </div>
+    </div>
+<pre><code>projects:
+  example-robot:
+    enabled:
+      research: true    <span class="c"># in cv.pdf</span>
+      yc: false         <span class="c"># left out of YC_CV.pdf, text kept</span></code></pre>
+    <p>Use real YAML booleans. The strings <code>"false"</code>, <code>0</code> and <code>1</code> are rejected with an error and are not interpreted.</p>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2><small>02</small>How it works</h2>
+    <h3><code>togglecv.py</code>: edit the Projects section of your existing CV</h3>
+    <ol class="flow">
+      <li><b>init --user NAME</b><span>Writes <code>projects.yaml</code> from your public repos. Every repo starts off and unreviewed. Forks and the profile README repo are skipped.</span></li>
+      <li><b>edit switches</b><span>Set <code>enabled: true</code> on the projects you want. List order is CV order.</span></li>
+      <li><b>review</b><span>For each slot, pick a README sentence, edit it, or write your own. It saves only when you answer <code>y</code>.</span></li>
+      <li><b>apply CV.tex</b><span>Writes <code>CV.togglecv.tex</code> with the new Projects section. <code>--compile</code> checks that it builds.</span></li>
+    </ol>
+    <p><strong>How <code>apply</code> finds the section.</strong> If the file has <code>% TOGGLECV:BEGIN</code> and <code>% TOGGLECV:END</code> lines, it replaces only the text between them. It adds these markers the first time, so running it again gives the same result. Otherwise it looks for exactly one heading that contains "Project" (<code>\section</code>, <code>\section*</code>, <code>\subsection</code> or a custom macro). It replaces everything up to the next heading of the same or higher level. If it finds no matching heading, or more than one, it stops and asks you to add the markers. Your original file changes only when you pass <code>--in-place</code>, which also keeps a <code>.bak</code> copy.</p>
+    <p><strong>Matching the look.</strong> <code>style: auto</code> uses Jake's Resume macros when your file defines them, and a nested <code>itemize</code> when it does not. <code>style: custom</code> takes one template entry with placeholders such as <code>&lt;&lt;title_link&gt;&gt;</code>, <code>&lt;&lt;dates&gt;&gt;</code> and <code>&lt;&lt;bullets&gt;&gt;</code>.</p>
+
+    <h3>How bullets are suggested</h3>
+    <p>The tool fetches the README through the GitHub API. It removes code blocks, tables, images, badges and headings, then ranks the remaining sentences for each slot. Sentences with numbers or outcome words rank high for Result. Build verbs rank high for Action. Purpose and setting rank high for Context. Setup instructions rank low. The suggestions are <strong>copied sentences, never generated</strong>: there is no language model and no API key. README sentences are usually too long for one CV line, so treat them as raw material.</p>
+
+    <h3><code>build.py</code>: complete one-page CVs from one YAML file</h3>
+<pre><code>GitHub READMEs ──► --draft (you pick/edit/approve) ──┐
+                                                     ▼
+config.yaml ──► validate ──► select per profile ──► Jinja2 → LaTeX ──► pdfLaTeX
+                                                     ──► line-fit + 1-page check ──► cv.pdf / YC_CV.pdf</code></pre>
+    <p>A PDF is written only if all of these checks pass:</p>
+    <ul class="plain">
+      <li>The CV is exactly one page and has no overflowing boxes.</li>
+      <li>Every bullet, skill row, achievement and leadership line fits on one line. Each line also fills at least 94% of its width before justification.</li>
+      <li>Every enabled project has three non-empty bullets.</li>
+      <li>Profiles, project order, booleans and field types are valid. Duplicate YAML keys are rejected.</li>
+    </ul>
+<pre><code>TOO SHORT   88.5%  project 5 bullet 1: expand wording without inventing claims
+TOO LONG   104.4%  project 1 bullet 3: rewrite as one line</code></pre>
+    <p>When a check fails, the previous <code>cv.pdf</code> stays in place. The tool never shrinks fonts or silently drops projects.</p>
+  </div>
+</section>
+
+<section id="results">
+  <div class="wrap">
+    <h2><small>03</small>Example output</h2>
+    <p>Both PDFs below were built on 2026-11-19 with <code>python build.py --all</code> from the unmodified <code>config.example.yaml</code> committed in the repository. All names, numbers and projects are placeholder sample data. In that run, both builds reported "all selected lines fill end-to-end" and "1 page, 2 selected projects". The repository's 48 unit tests (<code>test_cv_config</code>, <code>test_readme_draft</code>, <code>test_togglecv</code>) also passed in the same checkout.</p>
+    <div class="grid2">
+      <figure><a href="cv-example.png"><img src="cv-example.png" width="910" height="1287" loading="lazy" alt="Research-profile one-page CV rendered from config.example.yaml for the placeholder person Alex Example, with Image Classifier and Line-Following Robot as projects."></a>
+        <figcaption><code>cv.pdf</code>, research profile: example-ml and example-robot are on.</figcaption></figure>
+      <figure><a href="yc-example.png"><img src="yc-example.png" width="910" height="1287" loading="lazy" alt="Industry-profile one-page CV rendered from config.example.yaml for Alex Example, with Image Classifier and CSV Reconciler as projects."></a>
+        <figcaption><code>YC_CV.pdf</code>, industry profile: example-ml and example-tool are on.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="wrap">
+    <h2><small>04</small>Run it locally</h2>
+    <p>You need Python 3.10+ and <code>pip install -r requirements.txt</code> (PyYAML and Jinja2). To compile PDFs, you also need a TeX distribution with <code>pdflatex</code>, such as MiKTeX or TeX Live.</p>
+    <h3>Use it with your own CV</h3>
+<pre><code>git clone https://github.com/Avinashistoocool/ToggleCV
+cd ToggleCV
+pip install -r requirements.txt
+
+python togglecv.py init --user &lt;your-github-username&gt;   <span class="c"># 1. projects.yaml from your public repos</span>
+<span class="c">#                                                          2. edit projects.yaml: enabled: true on the ones you want</span>
+python togglecv.py review                               <span class="c"># 3. pick/edit/approve bullets from each README</span>
+python togglecv.py apply my_cv.tex --compile            <span class="c"># 4. writes my_cv.togglecv.tex (+ PDF check)</span></code></pre>
+    <h3>Built-in two-profile builder</h3>
+<pre><code>copy config.example.yaml config.yaml   <span class="c"># macOS/Linux: cp config.example.yaml config.yaml</span>
+python build.py --all                  <span class="c"># build both CVs</span>
+python build.py --list                 <span class="c"># show every project and its switches</span>
+python -m unittest test_cv_config -v   <span class="c"># run the test suite</span></code></pre>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>togglecv.py refresh</code></td><td>Adds new repos (off), updates stars, language and URLs, and follows renames. It never changes your switches, titles, dates or bullets.</td></tr>
+        <tr><td><code>togglecv.py list</code></td><td>Shows the on and reviewed status of every project.</td></tr>
+        <tr><td><code>build.py --sync-github</code></td><td>Refreshes GitHub metadata in <code>config.yaml</code>. New repos are added switched off, with empty bullets.</td></tr>
+        <tr><td><code>build.py --draft [ID ...]</code></td><td>Lets you pick R-A-C bullets from README sentences. It saves only after you approve.</td></tr>
+        <tr><td><code>build.py --tex-only</code></td><td>Writes the LaTeX without compiling or checking it.</td></tr>
+      </tbody>
+    </table></div>
+    <p>Public repositories need no token. Set <code>GITHUB_TOKEN</code> to read private repositories or to raise the rate limit. <code>config.yaml</code>, <code>projects.yaml</code>, generated CVs and <code>assets/</code> are git-ignored, so your personal details stay out of the repository.</p>
+  </div>
+</section>
+
+<section id="limits">
+  <div class="wrap">
+    <h2><small>05</small>Limitations</h2>
+    <ul class="plain">
+      <li><strong>The build checks layout, not truth.</strong> Keep the source of each number in the project's <code>notes</code> field. Do not add claims you cannot support to fill a line.</li>
+      <li>Suggested bullets are README sentences. They are often too long or written as instructions, so you must edit them.</li>
+      <li><code>apply</code> refuses enabled projects that are not reviewed unless you pass <code>--allow-unreviewed</code>. It also refuses enabled projects that are missing one of the three bullets.</li>
+      <li>Syncing rewrites the YAML layout and removes custom comments. Put anything you want to keep in <code>notes</code>.</li>
+      <li><code>build.py</code> ships with only the <code>research</code> and <code>yc</code> profiles. Adding a third profile requires code changes in <code>cv_config.py</code> and a new template.</li>
+      <li>Bullets longer than 160 characters are flagged. Combining accents are removed with a warning.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="more">
+  <div class="wrap">
+    <h2><small>06</small>Further reading</h2>
+    <ul class="plain">
+      <li><a href="https://github.com/Avinashistoocool/ToggleCV#readme">README</a>: full command reference, the <code>custom</code> style placeholders and the config field reference.</li>
+      <li><a href="https://github.com/Avinashistoocool/ToggleCV/blob/main/projects.example.yaml"><code>projects.example.yaml</code></a>: a complete toggle file.</li>
+      <li><a href="https://github.com/Avinashistoocool/ToggleCV/blob/main/config.example.yaml"><code>config.example.yaml</code></a>: the sanitized sample used for the PDFs above.</li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="https://avinashistoocool.github.io/">&larr; avinash</a>
+    <a href="https://avinashistoocool.github.io/projects/">All projects</a>
+    <a href="https://github.com/Avinashistoocool/ToggleCV">Source &nearr;</a>
+  </div>
+  <div class="wrap"><p>ToggleCV is MIT-licensed. The sample CVs on this page use placeholder data only.</p></div>
+</footer>
+
+<script>
+(function(){
+  var titles={"example-ml":"Image Classifier","example-robot":"Line-Following Robot","example-tool":"CSV Reconciler"};
+  var order={research:["example-ml","example-robot"],yc:["example-ml","example-tool"]};
+  var boxes=document.querySelectorAll('#demo input');
+  function render(){
+    ["research","yc"].forEach(function(k){
+      var on=[];
+      boxes.forEach(function(b){ if(b.dataset.k===k && b.checked) on.push(b.dataset.p); });
+      on.sort(function(a,b){
+        var ia=order[k].indexOf(a), ib=order[k].indexOf(b);
+        return (ia<0?99:ia)-(ib<0?99:ib);
+      });
+      var ul=document.getElementById('o-'+k); ul.textContent='';
+      if(!on.length){ var li=document.createElement('li'); li.className='none'; li.textContent='no projects enabled'; ul.appendChild(li); }
+      on.forEach(function(p){ var li=document.createElement('li'); li.textContent=titles[p]+' (3 bullets)'; ul.appendChild(li); });
+    });
+  }
+  boxes.forEach(function(b){ b.addEventListener('change',render); });
+  render();
+})();
+</script>
+</body>
+</html>
